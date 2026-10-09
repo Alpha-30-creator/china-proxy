@@ -21,5 +21,14 @@ for M in NetworkIn NetworkOut; do
 done
 printf "  %-11s %8.2f GB of %s GB allowance (%.1f%%)\n" "TOTAL" "$tot" "$ALLOW" \
   "$(echo "scale=4; $tot*100/$ALLOW" | bc -l)"
+
+DAY=$(date -u +%-d)
+DIM=$(date -u -v1d -v+1m -v-1d +%-d 2>/dev/null || date -u -d "$(date -u +%Y-%m-01) +1 month -1 day" +%-d)
+PROJ=$(echo "scale=1; $tot/$DAY*$DIM" | bc -l)
 echo
+printf "  Day %s of %s this month. At this rate: ~%.0f GB by month end.\n" "$DAY" "$DIM" "$PROJ"
+echo
+echo "  The allowance is PER CALENDAR MONTH (UTC) and resets on the 1st. Nothing rolls over."
+echo "  Both directions count toward it, so ~2 GB is used per 1 GB you actually download."
+echo "  Going over does not cut you off - outbound overage is billed; inbound overage is free."
 echo "  Rule of thumb: 1 hour of 1080p video ~= 6 GB of allowance (3 GB each way)."
