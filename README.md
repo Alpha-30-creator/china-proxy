@@ -131,6 +131,7 @@ destination. It is gitignored.
 | `./qr.sh` | **Pair a phone.** Prints the connection QR in your terminal. |
 | `./swap-ip.sh` | **Emergency.** Swaps a blocked address for a fresh one. ~2 minutes. |
 | `./panel.sh` | SSH tunnel to the admin panel. |
+| `./usage.sh` | How much of this month's data transfer allowance you have used. |
 | `python3 mkconfig.py` | Regenerates the local Xray test config. |
 | `python3 mkclash.py` | Regenerates a Clash/mihomo profile. |
 | `python3 verify.py` | Proves the tunnel works, without touching system network settings. |
@@ -237,11 +238,51 @@ It releases the dead address, allocates a fresh one, re-points the connection de
 prints the next steps. About two minutes.
 
 **It keeps the same uuid and REALITY keys.** The server listens on `0.0.0.0:443` and never cared
-about its own address — only the share link embedded it. So on your devices you change exactly
-one thing:
+about its own address — only the share link embedded it. So on each device you change exactly one
+field. **You do not need to re-pair, re-scan, or re-import anything.**
 
-- **Desktop:** edit the profile's `server:` line.
-- **Phone:** edit the **Address** field on the profile. No need to re-scan anything.
+Note the new address that the script prints, then do both devices.
+
+#### Desktop — Clash Verge
+
+1. The script already regenerated `clash-profile.yaml` with the new address.
+2. In Clash Verge go to **Profiles**.
+3. Click the **edit (pencil)** icon on your profile to open its editor.
+4. Find the single line `    server: <old-address>` and change it to the new one.
+   Leave `uuid`, `public-key`, `short-id` and `servername` exactly as they are.
+5. **Save.** The core reloads automatically.
+6. **Proxies** → re-run the latency test. It should show a number, not *Timeout*.
+
+   Prefer to start clean? Delete the profile and re-import the regenerated
+   `clash-profile.yaml` as a **Local** profile — same result, a few more clicks.
+
+7. Confirm, with no `-x` flag (this also proves TUN is still active):
+
+   ```bash
+   curl -s https://api.ipify.org
+   ```
+
+   It must print the **new** address.
+
+#### Phone — v2rayNG
+
+1. Open v2rayNG. **Do not** tap **+**; you are editing, not adding.
+2. Tap the **pencil / edit** icon on the right of your existing profile row.
+3. Change the **Address** field to the new address. Leave **Port**, **id (UUID)**,
+   **SNI**, **publicKey**, **shortId**, **Fingerprint** and **Flow** untouched.
+4. Tap the **✓ / save** icon, top right.
+5. Tap the profile row to make sure it is still selected.
+6. Tap the **V button**: once to disconnect, once more to reconnect. A stale connection
+   will otherwise keep trying the dead address.
+7. Check with **⋮ → Test profile connection**, or just load a site that was blocked.
+
+If the edit screen is confusing, `./qr.sh` on the computer gives you a fresh QR — scan it,
+then delete the old profile so you are not left with two.
+
+#### Afterwards
+
+- Verify from inside the network: `https://ping.pe/<new-address>` — country rows at 0% loss.
+- If they are at 100%, the replacement address is blocked too. Run `./swap-ip.sh` again.
 
 > **Expect to run it more than once.** Cloud providers recycle addresses, and many were already
 > burned by previous proxy users. **Getting a blocked address is the normal case, not bad luck** —
@@ -267,6 +308,46 @@ Most "it's blocked" moments are not. Rule out the boring explanations first.
 Confirm the last one with controls before acting: check that those same probe nodes can reach a
 domestic address *and* an unrelated foreign address. If both succeed and only yours fails, it is a
 block.
+
+---
+
+## Sizing: is the cheapest instance enough?
+
+For a couple of devices, almost certainly yes. **The constraint is the cross-border link, not the
+server.** Those links deliver roughly 10–50 Mbit/s; a one-vCPU instance running XTLS-Vision pushes
+several hundred, and the data path uses `splice`, so encryption barely touches the CPU. Two
+simultaneous clients — a laptop doing browsing, chat and video, and a phone doing messaging and
+calls — is not a meaningful load. RAM is the thing to watch on a 512 MB box, which is why the
+setup adds 1 GB of swap.
+
+**Data transfer is the real limit**, and it is easy to misjudge, because the allowance counts
+**both directions**. Every 1 GB you download costs about **2 GB** of allowance: once arriving at
+the server, once leaving it for you.
+
+| Activity | Per hour, real | Per hour, allowance |
+|---|---|---|
+| Terminal work, chat, LLM APIs | a few MB | negligible |
+| Browsing, social media | ~0.1–0.3 GB | ~0.2–0.6 GB |
+| Video call | ~0.5 GB | ~1 GB |
+| 1080p video | ~3 GB | ~6 GB |
+| 4K video | ~7 GB | ~14 GB |
+
+With a 1 TB allowance that is roughly **160 hours of 1080p a month**, or unlimited amounts of
+everything else. Only sustained 4K streaming puts it at risk.
+
+Check where you stand at any time:
+
+```bash
+./usage.sh
+```
+
+If you do exceed it, the instance is not cut off — the overage is billed, on the order of
+$0.09–0.12 per GB depending on region, and only on outbound.
+
+**Resizing is not an in-place operation.** You snapshot the instance and create a new, larger one
+from the snapshot, which gets a new address — so budget for re-pairing your clients. Given the
+link is the bottleneck, upgrade only if `./usage.sh` says you are near the transfer cap, never
+for speed.
 
 ---
 
