@@ -132,6 +132,7 @@ destination. It is gitignored.
 | `./swap-ip.sh` | **Emergency.** Swaps a blocked address for a fresh one. ~2 minutes. |
 | `./panel.sh` | SSH tunnel to the admin panel. |
 | `./usage.sh` | How much of this month's data transfer allowance you have used. |
+| `./test-client.sh` | Checks this computer is fully routed: egress, IPv6 leak, DNS, reachability. |
 | `python3 mkconfig.py` | Regenerates the local Xray test config. |
 | `python3 mkclash.py` | Regenerates a Clash/mihomo profile. |
 | `python3 verify.py` | Proves the tunnel works, without touching system network settings. |
@@ -212,8 +213,18 @@ With no `-x` flag, only TUN makes that return the server's address.
 
 ## Verifying
 
-**From outside:** `python3 verify.py` — expect the server's address as the egress, and a 200 from
-a site that would otherwise be blocked.
+**The whole client, in one command** — run it with the proxy on and any other VPN off:
+
+```bash
+./test-client.sh            # add --speed to measure throughput
+```
+
+It checks the egress address without any proxy flags (which is what proves TUN is active, not
+just System Proxy), looks for an IPv6 bypass, reports which resolver your DNS actually reaches,
+and confirms reachability and latency.
+
+**Just the tunnel, without changing system settings:** `python3 verify.py` — expect the server's
+address as the egress, and a 200 from a site that would otherwise be blocked.
 
 **From inside the firewall — the test that matters:**
 
