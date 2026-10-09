@@ -1,0 +1,7 @@
+# Contains the client UUID - this is a credential. Never commit.
+client-*.json
+*.log
+clash-profile.yaml
+*.png
+config.sh
+__pycache__/
