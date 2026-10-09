@@ -26,16 +26,19 @@ else no "IPv4 exits as $IP4 - NOT the proxy. TUN off, or another VPN is active."
 
 echo
 echo "2. IPv6 leak"
+SERVER6=$(aws lightsail get-instance --instance-name "$INSTANCE" --region "$AWS_REGION" \
+          --profile "$AWS_PROFILE_NAME" --query 'instance.ipv6Addresses' --output text 2>/dev/null)
 IP6=$(curl -s -6 --max-time 10 https://api6.ipify.org 2>/dev/null || true)
 if [ -z "$IP6" ]; then ok "no IPv6 route - cannot leak"
-else hmm "IPv6 is reachable as $IP6 - traffic may bypass the tunnel. Disable IPv6 on the interface, or set ipv6:false in the client."; fi
+elif echo "$SERVER6" | grep -qiF "$IP6"; then ok "IPv6 also exits via the proxy ($IP6)"
+else no "IPv6 exits as $IP6 - that is NOT the server, so IPv6 traffic bypasses the tunnel."; fi
 
 echo
 echo "3. DNS resolver"
-R=$(curl -s --max-time 20 https://edns.ip-api.com/json 2>/dev/null | python3 -c 'import json,sys;d=json.load(sys.stdin);print(d.get("dns",{}).get("ip",""))' 2>/dev/null || true)
+R=$(curl -sL --max-time 20 https://edns.ip-api.com/json 2>/dev/null | python3 -c 'import json,sys;d=json.load(sys.stdin);print(d.get("dns",{}).get("ip",""))' 2>/dev/null || true)
 if [ -z "$R" ]; then hmm "could not determine the resolver"
 elif [ "$R" = "$SERVER" ]; then ok "DNS resolves through the proxy ($R)"
-else hmm "DNS resolver is $R (not the proxy). Usually fine with fake-ip, but it does reveal your region to the resolver."; fi
+else hmm "DNS queries reach the internet from $R, not the proxy. Harmless with fake-ip - your traffic is still tunnelled - but it does reveal your region to that resolver."; fi
 
 echo
 echo "4. Reachability"
