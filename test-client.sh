@@ -59,7 +59,8 @@ if [ "$SPEED" = yes ]; then
       https://speed.cloudflare.com/__down?bytes=20000000 || echo 0)
   MBPS=$(echo "scale=1; $S*8/1000000" | bc -l)
   echo "     ${MBPS} Mbit/s"
-  echo "     (10-50 is normal across a censored border; local speed is not the limit)"
+  echo "     (measured in practice: ~60 Mbit/s across a censored border, ~130 Mbit/s without one.)"
+echo "     (Your local line speed is not the limit - the cross-border link is.)"
 fi
 
 echo

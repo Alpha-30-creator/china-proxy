@@ -371,8 +371,10 @@ for speed.
   existing session works fine. Log in before you travel.
 - **Expect evening congestion.** International links slow down at night independently of your
   setup. Not a fault to debug.
-- **Realistic throughput:** roughly 10–50 Mbit/s, single digits at peak. Local bandwidth is not
-  the constraint — the congested cross-border link is, and the proxy itself costs a few percent.
+- **Realistic throughput:** measured on this setup, **~60 Mbit/s from inside the censored
+  network** (146 ms to the server) against ~130 Mbit/s from outside it (46 ms). Your local line
+  speed is not the constraint — the cross-border link is, and the proxy itself costs a few
+  percent. Expect worse at peak hours.
 - **Keep profile names unremarkable, and don't redistribute access.** Personal use is a tolerated
   grey area in many places; distributing access is a different category of risk. Check the rules
   that apply to you.
