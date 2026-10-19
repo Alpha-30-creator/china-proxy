@@ -116,6 +116,52 @@ Updating the Xray core from the panel will break mihomo clients again.
 
 ---
 
+## Deploy and destroy on demand
+
+If you only need the proxy for occasional trips, do not leave it running.
+
+> **Stopping a Lightsail instance does not stop billing.** AWS charges for stopped instances
+> exactly as for running ones — the plan covers reserved compute and storage either way. Only
+> **deleting** ends the charge, and a static IP keeps billing on its own if you leave it
+> allocated. `./destroy.sh` handles both.
+
+```bash
+./destroy.sh     # tear everything down, charges stop
+./deploy.sh      # bring it back, ~5 minutes
+```
+
+**Your clients survive the round trip.** `identity.json` holds the uuid and REALITY keypair and is
+reused on every deploy, so after redeploying you change one field per device — the address — and
+everything else still matches. Without that file a redeploy would mean re-pairing from scratch.
+
+> **Back up `identity.json`.** It is gitignored and lives only on your machine. Losing it is not a
+> disaster — `./deploy.sh` just generates a new identity and you re-pair with `./qr.sh` — but
+> keeping a copy in your password manager saves the hassle.
+
+`./deploy.sh` is idempotent: run it when an instance already exists and it exits without touching
+anything. It creates the instance, imports the SSH key, allocates and attaches a static IP, opens
+TCP 443 / TCP 22 / ICMP, installs and configures the panel, **pins Xray to the version that works
+with mihomo clients**, creates the inbound from your saved identity, and regenerates your local
+client configs.
+
+`./destroy.sh` asks you to type `DELETE`, then removes instances, static IPs, disks and snapshots
+in the configured region, and finishes by listing anything billable left **across every region**
+so you can see for yourself that the bill is zero.
+
+### What costs what
+
+| State | Cost |
+|---|---|
+| Deployed and running | the bundle price, hourly and prorated |
+| Deployed but **stopped** | **the same** — this is the trap |
+| Destroyed | nothing |
+| SSH key pair, left behind by `destroy.sh` | free |
+
+Because billing is hourly, a one-week trip on a $5/month bundle costs roughly **$1.20** if you
+deploy on arrival and destroy on return — assuming any introductory free period has expired.
+
+---
+
 ## Configure the scripts
 
 ```bash
@@ -127,6 +173,8 @@ destination. It is gitignored.
 
 | Script | What it does |
 |---|---|
+| `./deploy.sh` | **Build the whole server from nothing.** ~5 minutes. |
+| `./destroy.sh` | **Delete everything so AWS charges nothing.** |
 | `./show-link.sh` | Prints the panel URL, login and the `vless://` link. **Output is secret.** |
 | `./qr.sh` | **Pair a phone.** Prints the connection QR in your terminal. |
 | `./swap-ip.sh` | **Emergency.** Swaps a blocked address for a fresh one. ~2 minutes. |

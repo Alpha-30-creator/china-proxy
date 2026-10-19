@@ -5,3 +5,4 @@ clash-profile.yaml
 *.png
 config.sh
 __pycache__/
+identity.json
