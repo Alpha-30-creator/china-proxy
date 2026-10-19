@@ -15,9 +15,9 @@ fi
 python3 "$DIR/mkidentity.py"
 
 echo "[1/7] SSH key pair"
-if ! $AWS lightsail get-key-pair --key-pair-name china-proxy >/dev/null 2>&1; then
-  [ -f "$SSH_KEY" ] || ssh-keygen -t ed25519 -f "$SSH_KEY" -N "" -C "china-proxy" >/dev/null
-  $AWS lightsail import-key-pair --key-pair-name china-proxy \
+if ! $AWS lightsail get-key-pair --key-pair-name "$KEY_PAIR" >/dev/null 2>&1; then
+  [ -f "$SSH_KEY" ] || ssh-keygen -t ed25519 -f "$SSH_KEY" -N "" -C "$KEY_PAIR" >/dev/null
+  $AWS lightsail import-key-pair --key-pair-name "$KEY_PAIR" \
      --public-key-base64 "$(cat "${SSH_KEY}.pub")" >/dev/null
   echo "      imported"
 else
@@ -27,7 +27,7 @@ fi
 echo "[2/7] creating instance ($BUNDLE, $AWS_REGION)"
 $AWS lightsail create-instances --instance-names "$INSTANCE" \
   --availability-zone "${AWS_REGION}a" --blueprint-id $BLUEPRINT --bundle-id "$BUNDLE" \
-  --key-pair-name china-proxy >/dev/null
+  --key-pair-name "$KEY_PAIR" >/dev/null
 
 echo -n "      waiting for it to run"
 for i in $(seq 1 60); do
@@ -37,7 +37,7 @@ for i in $(seq 1 60); do
 done
 
 echo "[3/7] static IP"
-SIP="china-proxy-ip-$(date +%s)"
+SIP="${INSTANCE}-ip-$(date +%s)"
 $AWS lightsail allocate-static-ip --static-ip-name "$SIP" >/dev/null
 $AWS lightsail attach-static-ip --static-ip-name "$SIP" --instance-name "$INSTANCE" >/dev/null
 IP=$(current_ip); echo "      $IP"

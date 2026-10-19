@@ -6,7 +6,7 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; source "$DIR/lib.sh"
 OLD=$(current_ip)
 OLDNAME=$(aws lightsail get-static-ips --region "$AWS_REGION" --profile "$AWS_PROFILE_NAME" \
           --query "staticIps[?ipAddress=='$OLD'].name" --output text)
-NEW="china-proxy-ip-$(date +%s)"
+NEW="${INSTANCE}-ip-$(date +%s)"
 echo "Current IP: $OLD"
 if [ -n "$OLDNAME" ] && [ "$OLDNAME" != "None" ]; then
   aws lightsail detach-static-ip  --static-ip-name "$OLDNAME" --region "$AWS_REGION" --profile "$AWS_PROFILE_NAME" >/dev/null

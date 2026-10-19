@@ -7,6 +7,8 @@ else
   exit 1
 fi
 
+KEY_PAIR="${KEY_PAIR:-${INSTANCE}-key}"
+
 current_ip() {
   aws lightsail get-instance --instance-name "$INSTANCE" \
     --region "$AWS_REGION" --profile "$AWS_PROFILE_NAME" \
